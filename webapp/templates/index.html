@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador 3D y Calculadora de Volumen</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Plotly.js desde CDN -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Visualizador 3D y Calculadora de Volumen</h1>
+            <p class="subtitle">Introduce una función z = f(x,y) y su dominio para visualizar la superficie y calcular el volumen</p>
+        </header>
+
+        <div class="content">
+            <!-- Formulario de entrada -->
+            <div class="form-section">
+                <h2>Parámetros de Entrada</h2>
+                <form id="calculatorForm">
+                    <div class="form-group">
+                        <label for="function">Función z = f(x, y):</label>
+                        <input type="text" id="function" name="function" 
+                               placeholder="Ejemplo: x**2 + y**2" 
+                               required>
+                        <small>Puede usar: +, -, *, /, **, sin, cos, tan, exp, log, sqrt, pi, e</small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="a">a (límite inferior de x):</label>
+                            <input type="number" id="a" name="a" 
+                                   step="0.1" value="-2" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="b">b (límite superior de x):</label>
+                            <input type="number" id="b" name="b" 
+                                   step="0.1" value="2" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="c">c (límite inferior de y):</label>
+                            <input type="number" id="c" name="c" 
+                                   step="0.1" value="-2" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="d">d (límite superior de y):</label>
+                            <input type="number" id="d" name="d" 
+                                   step="0.1" value="2" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="num_points">Resolución (puntos de malla):</label>
+                        <input type="number" id="num_points" name="num_points" 
+                               min="20" max="200" value="50" step="10">
+                        <small>Valor entre 20 y 200. Mayor resolución = mejor calidad pero más lento</small>
+                    </div>
+
+                    <button type="submit" class="btn-calculate">Calcular y Visualizar</button>
+                </form>
+
+                <!-- Ejemplos rápidos -->
+                <div class="examples">
+                    <h3>Ejemplos rápidos:</h3>
+                    <button class="btn-example" data-func="x**2 + y**2" data-a="-2" data-b="2" data-c="-2" data-d="2">
+                        Paraboloide
+                    </button>
+                    <button class="btn-example" data-func="sin(x) * cos(y)" data-a="0" data-b="6.28" data-c="0" data-d="3.14">
+                        Ondas 2D
+                    </button>
+                    <button class="btn-example" data-func="exp(-(x**2 + y**2))" data-a="-2" data-b="2" data-c="-2" data-d="2">
+                        Gaussiana
+                    </button>
+                    <button class="btn-example" data-func="x**2 - y**2" data-a="-2" data-b="2" data-c="-2" data-d="2">
+                        Silla de montar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sección de resultados -->
+            <div class="results-section">
+                <h2>Resultados</h2>
+                
+                <!-- Mensaje de carga -->
+                <div id="loading" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Calculando volumen y generando gráfico...</p>
+                    <small>Esto puede tardar unos segundos para funciones complejas o dominios grandes</small>
+                </div>
+
+                <!-- Mensaje de error -->
+                <div id="error" class="error" style="display: none;"></div>
+
+                <!-- Resultados del volumen -->
+                <div id="volumeResults" class="volume-results" style="display: none;">
+                    <div class="result-card">
+                        <h3>Volumen Calculado</h3>
+                        <div class="volume-value" id="volumeValue">-</div>
+                        <div class="error-estimate">
+                            Error estimado: <span id="errorValue">-</span>
+                        </div>
+                    </div>
+                    <div class="function-info">
+                        <strong>Función:</strong> z = <span id="functionDisplay">-</span><br>
+                        <strong>Dominio:</strong> [<span id="domainDisplay">-</span>]
+                    </div>
+                </div>
+
+                <!-- Gráfico 3D -->
+                <div id="plotContainer" class="plot-container"></div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Calculadora de Volumen 3D | Powered by Flask + Plotly</p>
+        </footer>
+    </div>
+
+    <script>
+        // Referencias a elementos del DOM
+        const form = document.getElementById('calculatorForm');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const volumeResults = document.getElementById('volumeResults');
+        const plotContainer = document.getElementById('plotContainer');
+        
+        // Botones de ejemplo
+        const exampleButtons = document.querySelectorAll('.btn-example');
+        exampleButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.getElementById('function').value = btn.dataset.func;
+                document.getElementById('a').value = btn.dataset.a;
+                document.getElementById('b').value = btn.dataset.b;
+                document.getElementById('c').value = btn.dataset.c;
+                document.getElementById('d').value = btn.dataset.d;
+            });
+        });
+
+        // Manejo del formulario
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Ocultar resultados previos y errores
+            error.style.display = 'none';
+            volumeResults.style.display = 'none';
+            plotContainer.innerHTML = '';
+            
+            // Mostrar mensaje de carga
+            loading.style.display = 'block';
+            
+            // Recoger datos del formulario
+            const formData = new FormData(form);
+            
+            try {
+                // Enviar petición POST
+                const response = await fetch('/calculate', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                // Ocultar carga
+                loading.style.display = 'none';
+                
+                if (response.ok) {
+                    // Mostrar resultados del volumen
+                    document.getElementById('volumeValue').textContent = data.volume.toFixed(6);
+                    document.getElementById('errorValue').textContent = data.error.toExponential(2);
+                    document.getElementById('functionDisplay').textContent = data.function;
+                    document.getElementById('domainDisplay').textContent = 
+                        `[${data.domain.a}, ${data.domain.b}] × [${data.domain.c}, ${data.domain.d}]`;
+                    volumeResults.style.display = 'block';
+                    
+                    // Insertar gráfico 3D
+                    plotContainer.innerHTML = data.plot_html;
+                    
+                } else {
+                    // Mostrar error
+                    error.textContent = '❌ Error: ' + data.error;
+                    error.style.display = 'block';
+                }
+                
+            } catch (err) {
+                loading.style.display = 'none';
+                error.textContent = '❌ Error de conexión: ' + err.message;
+                error.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

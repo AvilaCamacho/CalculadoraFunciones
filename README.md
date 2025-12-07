@@ -140,6 +140,72 @@ El gráfico se genera mediante:
 - El tiempo de cálculo aumenta con dominios muy grandes
 - Se recomienda usar dominios moderados para mejor visualización
 
+## 🌐 Aplicación Web Flask + Plotly
+
+### Descripción
+Además de la aplicación de línea de comandos, este proyecto incluye una **aplicación web interactiva** desarrollada con Flask y Plotly que permite visualizar funciones 3D y calcular volúmenes desde el navegador.
+
+### Características
+- ✅ Interfaz web intuitiva y moderna
+- ✅ Visualización 3D interactiva con Plotly (rotar, zoom, pan)
+- ✅ Cálculo de volumen en tiempo real
+- ✅ Ejemplos rápidos predefinidos
+- ✅ Validación de errores en el navegador
+- ✅ Responsive design para móviles y tablets
+
+### Instalación
+
+1. Instale las dependencias de la aplicación web:
+```bash
+pip install -r requirements-web.txt
+```
+
+### Ejecución
+
+Para iniciar la aplicación web:
+
+```bash
+export FLASK_APP=webapp.app
+flask run
+```
+
+O alternativamente:
+```bash
+python -m webapp.app
+```
+
+Luego abra su navegador en: **http://127.0.0.1:5000**
+
+### Uso de la aplicación web
+
+1. Introduzca una función matemática en el campo "Función z = f(x, y)"
+   - Ejemplo: `x**2 + y**2`
+2. Defina el dominio rectangular especificando los límites:
+   - `a` y `b` para el eje x
+   - `c` y `d` para el eje y
+3. Ajuste la resolución de la malla (20-200 puntos)
+4. Haga clic en "Calcular y Visualizar"
+5. Visualice el resultado:
+   - Volumen calculado con error estimado
+   - Gráfico 3D interactivo (puede rotar con el mouse)
+
+### Ejemplos incluidos
+
+La aplicación incluye botones de ejemplo para funciones comunes:
+- **Paraboloide**: `x**2 + y**2`
+- **Ondas 2D**: `sin(x) * cos(y)`
+- **Gaussiana**: `exp(-(x**2 + y**2))`
+- **Silla de montar**: `x**2 - y**2`
+
+### Nota sobre rendimiento
+
+⚠️ **Importante**: El cálculo del volumen usando integración doble puede tardar varios segundos para:
+- Funciones complejas (múltiples operaciones trigonométricas o exponenciales)
+- Dominios muy grandes
+- Alta resolución (>100 puntos)
+
+La aplicación muestra un indicador de carga mientras procesa la solicitud.
+
 ## 📄 Licencia
 
 Este proyecto es de código abierto y está disponible para uso educativo.
