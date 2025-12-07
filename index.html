@@ -1,123 +1,146 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Calculadora de Funciones - Vista previa</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Calculadora - Vista previa</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main class="page">
-    <h1>Calculadora de funciones — Vista previa</h1>
+  <div class="calculator" role="application" aria-label="Calculadora">
+    <header class="title">Calculadora</header>
+    <input type="text" id="display" class="display" aria-label="Pantalla" readonly value="0">
 
-    <section class="calculator">
-      <input id="display" type="text" placeholder="Escribe una expresión (ej: sin(0.5)+3^2)" aria-label="Pantalla de la calculadora" />
+    <div class="buttons" role="group" aria-label="Teclado de la calculadora">
+      <button class="btn btn-ac" data-action="clear">AC</button>
+      <button class="btn btn-ops" data-action="toggle-sign">±</button>
+      <button class="btn btn-ops" data-action="percent">%</button>
+      <button class="btn btn-ops" data-value="÷">÷</button>
 
-      <div class="buttons">
-        <button data-value="7">7</button>
-        <button data-value="8">8</button>
-        <button data-value="9">9</button>
-        <button data-value="/">÷</button>
+      <button class="btn" data-value="7">7</button>
+      <button class="btn" data-value="8">8</button>
+      <button class="btn" data-value="9">9</button>
+      <button class="btn btn-ops" data-value="×">×</button>
 
-        <button data-value="4">4</button>
-        <button data-value="5">5</button>
-        <button data-value="6">6</button>
-        <button data-value="*">×</button>
+      <button class="btn" data-value="4">4</button>
+      <button class="btn" data-value="5">5</button>
+      <button class="btn" data-value="6">6</button>
+      <button class="btn btn-ops" data-value="-">-</button>
 
-        <button data-value="1">1</button>
-        <button data-value="2">2</button>
-        <button data-value="3">3</button>
-        <button data-value="-">−</button>
+      <button class="btn" data-value="1">1</button>
+      <button class="btn" data-value="2">2</button>
+      <button class="btn" data-value="3">3</button>
+      <button class="btn btn-ops" data-value="+">+</button>
 
-        <button data-value="0">0</button>
-        <button data-value=".">.</button>
-        <button id="btn-eval" class="accent">=</button>
-        <button data-value="+">+</button>
+      <button class="btn btn-zero" data-value="0">0</button>
+      <button class="btn" data-value=".">.</button>
+      <button class="btn btn-eq" data-action="equals">=</button>
+    </div>
 
-        <button data-value="(">(</button>
-        <button data-value=")">)</button>
-        <button data-value="^">^</button>
-        <button id="btn-back">⌫</button>
-
-        <button data-value="sin(" class="fn">sin</button>
-        <button data-value="cos(" class="fn">cos</button>
-        <button data-value="tan(" class="fn">tan</button>
-        <button data-value="sqrt(" class="fn">√</button>
-
-        <button id="btn-clear" class="wide">Limpiar</button>
-      </div>
-
-      <p class="help">Funciones soportadas: sin, cos, tan, sqrt, log, ln, abs. Usa ^ para potencia. También puedes usar pi y e.</p>
-    </section>
-
-    <footer>
-      <small>Archivo de vista previa generado y subido al repositorio.</small>
-    </footer>
-  </main>
+    <footer class="help">Puedes usar el teclado: números, + - * / y Enter para calcular.</footer>
+  </div>
 
   <script>
     (function(){
       const display = document.getElementById('display');
-      const buttons = document.querySelectorAll('.buttons button[data-value]');
-      const btnEval = document.getElementById('btn-eval');
-      const btnClear = document.getElementById('btn-clear');
-      const btnBack = document.getElementById('btn-back');
+      const buttons = document.querySelector('.buttons');
+      let current = '';
 
-      buttons.forEach(b => b.addEventListener('click', () => appendToDisplay(b.getAttribute('data-value'))));
-      btnEval.addEventListener('click', evaluateExpr);
-      btnClear.addEventListener('click', () => display.value = '');
-      btnBack.addEventListener('click', () => display.value = display.value.slice(0, -1));
-
-      display.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') { e.preventDefault(); evaluateExpr(); }
-      });
-
-      function appendToDisplay(text) {
-        display.focus();
-        const start = display.selectionStart || display.value.length;
-        const end = display.selectionEnd || start;
-        display.value = display.value.slice(0, start) + text + display.value.slice(end);
-        const pos = start + text.length;
-        display.setSelectionRange(pos, pos);
+      function updateDisplay(value){
+        display.value = value === '' ? '0' : value;
       }
 
-      function evaluateExpr() {
-        let expr = display.value.trim();
-        if (!expr) return;
+      function append(char){
+        if(current === 'Error') current = '';
+        // Prevent multiple leading zeros
+        if(char === '0' && current === '0') return;
+        // Prevent multiple dots in a number segment
+        if(char === '.' && /\.[0-9]*$/.test(current)) return;
+        current += char;
+        updateDisplay(current);
+      }
 
-        // Reemplazos simples para operadores y constantes
-        expr = expr.replace(/×/g, '*').replace(/÷/g, '/').replace(/–/g, '-').replace(/−/g, '-').replace(/\^/g, '**');
+      function clearAll(){ current = ''; updateDisplay(current); }
 
-        // Mapeo de funciones y constantes a Math
-        const fnMap = {
-          'sin': 'Math.sin',
-          'cos': 'Math.cos',
-          'tan': 'Math.tan',
-          'asin': 'Math.asin',
-          'acos': 'Math.acos',
-          'atan': 'Math.atan',
-          'sqrt': 'Math.sqrt',
-          'abs': 'Math.abs',
-          'ln': 'Math.log',
-          'log': 'Math.log10',
-          'pi': 'Math.PI',
-          'e': 'Math.E'
-        };
+      function toggleSign(){
+        if(!current) return;
+        // Try to toggle the last number's sign
+        // Split by operators
+        const parts = current.split(/([+\-×÷])/);
+        for(let i = parts.length -1; i>=0; i--){
+          if(parts[i] && !/[+\-×÷]/.test(parts[i])){
+            if(parts[i].startsWith('(-') && parts[i].endsWith(')')){
+              parts[i] = parts[i].slice(2,-1);
+            } else {
+              parts[i] = '(-' + parts[i] + ')';
+            }
+            break;
+          }
+        }
+        current = parts.join('');
+        updateDisplay(current);
+      }
 
-        expr = expr.replace(/\b(pi|e|sin|cos|tan|asin|acos|atan|sqrt|abs|ln|log)\b/gi, function(m){
-          const key = m.toLowerCase();
-          return fnMap[key] || m;
-        });
+      function applyPercent(){
+        if(!current) return;
+        // apply percent to last number
+        const parts = current.split(/([+\-×÷])/);
+        for(let i = parts.length -1; i>=0; i--){
+          if(parts[i] && !/[+\-×÷]/.test(parts[i])){
+            const num = parseFloat(parts[i].replace(/[()]/g,''));
+            if(!isNaN(num)) parts[i] = String(num/100);
+            break;
+          }
+        }
+        current = parts.join('');
+        updateDisplay(current);
+      }
 
-        try {
-          // Evaluación controlada: usamos Function para evaluar la expresión transformada
-          const result = Function('return (' + expr + ')')();
-          display.value = (typeof result === 'number' && !isFinite(result)) ? 'Error: resultado no finito' : String(result);
-        } catch (err) {
-          alert('Expresión no válida: ' + err.message);
+      function calculate(){
+        if(!current) return;
+        let expr = current.replace(/×/g,'*').replace(/÷/g,'/');
+        // remove accidental trailing operators
+        expr = expr.replace(/[+\-*/.]$/,'');
+        try{
+          // Use Function for safer eval than eval()
+          const result = Function('return ('+expr+')')();
+          if(result === Infinity || result === -Infinity || Number.isNaN(result)) throw new Error('Math error');
+          current = String(result);
+          updateDisplay(current);
+        } catch(e){
+          current = 'Error';
+          updateDisplay(current);
         }
       }
 
+      buttons.addEventListener('click', (e)=>{
+        const btn = e.target.closest('button');
+        if(!btn) return;
+        const val = btn.dataset.value;
+        const action = btn.dataset.action;
+        if(action === 'clear') return clearAll();
+        if(action === 'toggle-sign') return toggleSign();
+        if(action === 'percent') return applyPercent();
+        if(action === 'equals') return calculate();
+        if(val) append(val);
+      });
+
+      // Keyboard support
+      window.addEventListener('keydown',(e)=>{
+        const key = e.key;
+        if(/^[0-9]$/.test(key)) return append(key);
+        if(key === '.') return append('.');
+        if(key === 'Enter') return calculate();
+        if(key === 'Backspace'){
+          current = current.slice(0,-1); updateDisplay(current); return;
+        }
+        if(key === '%') return applyPercent();
+        if(key === '+' || key === '-') return append(key);
+        if(key === '*' ) return append('×');
+        if(key === '/') return append('÷');
+      });
+
+      updateDisplay(current);
     })();
   </script>
 </body>
