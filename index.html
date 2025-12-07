@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calculadora de Funciones - Vista previa</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="page">
+    <h1>Calculadora de funciones — Vista previa</h1>
+
+    <section class="calculator">
+      <input id="display" type="text" placeholder="Escribe una expresión (ej: sin(0.5)+3^2)" aria-label="Pantalla de la calculadora" />
+
+      <div class="buttons">
+        <button data-value="7">7</button>
+        <button data-value="8">8</button>
+        <button data-value="9">9</button>
+        <button data-value="/">÷</button>
+
+        <button data-value="4">4</button>
+        <button data-value="5">5</button>
+        <button data-value="6">6</button>
+        <button data-value="*">×</button>
+
+        <button data-value="1">1</button>
+        <button data-value="2">2</button>
+        <button data-value="3">3</button>
+        <button data-value="-">−</button>
+
+        <button data-value="0">0</button>
+        <button data-value=".">.</button>
+        <button id="btn-eval" class="accent">=</button>
+        <button data-value="+">+</button>
+
+        <button data-value="(">(</button>
+        <button data-value=")">)</button>
+        <button data-value="^">^</button>
+        <button id="btn-back">⌫</button>
+
+        <button data-value="sin(" class="fn">sin</button>
+        <button data-value="cos(" class="fn">cos</button>
+        <button data-value="tan(" class="fn">tan</button>
+        <button data-value="sqrt(" class="fn">√</button>
+
+        <button id="btn-clear" class="wide">Limpiar</button>
+      </div>
+
+      <p class="help">Funciones soportadas: sin, cos, tan, sqrt, log, ln, abs. Usa ^ para potencia. También puedes usar pi y e.</p>
+    </section>
+
+    <footer>
+      <small>Archivo de vista previa generado y subido al repositorio.</small>
+    </footer>
+  </main>
+
+  <script>
+    (function(){
+      const display = document.getElementById('display');
+      const buttons = document.querySelectorAll('.buttons button[data-value]');
+      const btnEval = document.getElementById('btn-eval');
+      const btnClear = document.getElementById('btn-clear');
+      const btnBack = document.getElementById('btn-back');
+
+      buttons.forEach(b => b.addEventListener('click', () => appendToDisplay(b.getAttribute('data-value'))));
+      btnEval.addEventListener('click', evaluateExpr);
+      btnClear.addEventListener('click', () => display.value = '');
+      btnBack.addEventListener('click', () => display.value = display.value.slice(0, -1));
+
+      display.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); evaluateExpr(); }
+      });
+
+      function appendToDisplay(text) {
+        display.focus();
+        const start = display.selectionStart || display.value.length;
+        const end = display.selectionEnd || start;
+        display.value = display.value.slice(0, start) + text + display.value.slice(end);
+        const pos = start + text.length;
+        display.setSelectionRange(pos, pos);
+      }
+
+      function evaluateExpr() {
+        let expr = display.value.trim();
+        if (!expr) return;
+
+        // Reemplazos simples para operadores y constantes
+        expr = expr.replace(/×/g, '*').replace(/÷/g, '/').replace(/–/g, '-').replace(/−/g, '-').replace(/\^/g, '**');
+
+        // Mapeo de funciones y constantes a Math
+        const fnMap = {
+          'sin': 'Math.sin',
+          'cos': 'Math.cos',
+          'tan': 'Math.tan',
+          'asin': 'Math.asin',
+          'acos': 'Math.acos',
+          'atan': 'Math.atan',
+          'sqrt': 'Math.sqrt',
+          'abs': 'Math.abs',
+          'ln': 'Math.log',
+          'log': 'Math.log10',
+          'pi': 'Math.PI',
+          'e': 'Math.E'
+        };
+
+        expr = expr.replace(/\b(pi|e|sin|cos|tan|asin|acos|atan|sqrt|abs|ln|log)\b/gi, function(m){
+          const key = m.toLowerCase();
+          return fnMap[key] || m;
+        });
+
+        try {
+          // Evaluación controlada: usamos Function para evaluar la expresión transformada
+          const result = Function('return (' + expr + ')')();
+          display.value = (typeof result === 'number' && !isFinite(result)) ? 'Error: resultado no finito' : String(result);
+        } catch (err) {
+          alert('Expresión no válida: ' + err.message);
+        }
+      }
+
+    })();
+  </script>
+</body>
+</html>
