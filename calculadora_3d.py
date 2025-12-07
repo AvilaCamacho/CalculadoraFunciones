@@ -21,6 +21,10 @@ def parse_function(func_str):
     
     Returns:
         Función que puede ser evaluada con valores x, y
+    
+    Nota de seguridad: Esta función usa eval() con un namespace restringido
+    que solo incluye funciones matemáticas seguras. Para uso en producción,
+    considere usar bibliotecas como sympy para parsing más robusto.
     """
     # Crear un namespace seguro con funciones matemáticas comunes
     safe_dict = {
@@ -62,7 +66,13 @@ def plot_surface_3d(func, a, b, c, d, num_points=100):
     X, Y = np.meshgrid(x, y)
     
     # Evaluar la función en la malla
-    Z = func(X, Y)
+    try:
+        Z = func(X, Y)
+        # Verificar que no haya valores infinitos o NaN
+        if not np.all(np.isfinite(Z)):
+            raise ValueError("La función produce valores no finitos (infinito o NaN) en el dominio")
+    except Exception as e:
+        raise ValueError(f"Error al evaluar la función en el dominio: {e}")
     
     # Crear figura 3D
     fig = plt.figure(figsize=(12, 8))
@@ -100,16 +110,17 @@ def calculate_volume(func, a, b, c, d):
         Volumen calculado y error estimado
     """
     # Usar scipy.integrate.dblquad para integración doble
-    # dblquad integra: ∫∫ f(y, x) dy dx
-    # Nota: dblquad usa el orden (y, x) no (x, y)
+    # dblquad(func, a, b, gfun, hfun) integra: ∫ₐᵇ ∫_{gfun(x)}^{hfun(x)} func(y, x) dy dx
+    # Para límites constantes en y, usamos funciones lambda que retornan c y d
     
     def integrand(y, x):
         return func(x, y)
     
     volume, error = integrate.dblquad(
         integrand,
-        a, b,  # límites de x
-        c, d   # límites de y
+        a, b,      # límites de x
+        lambda x: c,  # límite inferior de y (constante)
+        lambda x: d   # límite superior de y (constante)
     )
     
     return volume, error
