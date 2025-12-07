@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora 3D - Visualizador de Funciones</title>
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+        }
+        
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .examples {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .examples h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .examples ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .examples li {
+            margin: 5px 0;
+            color: #424242;
+        }
+        
+        .examples code {
+            background: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #d32f2f;
+        }
+        
+        #plot-container {
+            margin-top: 25px;
+            min-height: 600px;
+            background: #fafafa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        #results {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f1f8e9;
+            border-radius: 8px;
+            border-left: 4px solid #689f38;
+            display: none;
+        }
+        
+        #results h3 {
+            color: #558b2f;
+            margin-bottom: 10px;
+        }
+        
+        #results p {
+            margin: 8px 0;
+            color: #33691e;
+            font-size: 1.1em;
+        }
+        
+        .error {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .error p {
+            color: #c62828;
+            margin: 0;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .grid-2, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Calculadora 3D</h1>
+            <p>Visualizador de Funciones y Calculadora de Volumen</p>
+        </div>
+        
+        <div class="content">
+            <div class="form-section">
+                <form id="calculator-form">
+                    <div class="form-group">
+                        <label for="function">Función z = f(x, y)</label>
+                        <input 
+                            type="text" 
+                            id="function" 
+                            name="function" 
+                            placeholder="Ej: x**2 + y**2"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Límites del Dominio</label>
+                        <div class="grid-4">
+                            <div>
+                                <label for="a">a (x mín)</label>
+                                <input 
+                                    type="number" 
+                                    id="a" 
+                                    name="a" 
+                                    step="any" 
+                                    value="-2"
+                                    required
+                                >
+                            </div>
+                            <div>
+                                <label for="b">b (x máx)</label>
+                                <input 
+                                    type="number" 
+                                    id="b" 
+                                    name="b" 
+                                    step="any" 
+                                    value="2"
+                                    required
+                                >
+                            </div>
+                            <div>
+                                <label for="c">c (y mín)</label>
+                                <input 
+                                    type="number" 
+                                    id="c" 
+                                    name="c" 
+                                    step="any" 
+                                    value="-2"
+                                    required
+                                >
+                            </div>
+                            <div>
+                                <label for="d">d (y máx)</label>
+                                <input 
+                                    type="number" 
+                                    id="d" 
+                                    name="d" 
+                                    step="any" 
+                                    value="2"
+                                    required
+                                >
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="resolution">Resolución (número de puntos)</label>
+                        <input 
+                            type="number" 
+                            id="resolution" 
+                            name="resolution" 
+                            min="10" 
+                            max="150" 
+                            value="50"
+                            required
+                        >
+                    </div>
+                    
+                    <button type="submit" class="button" id="calculate-btn">
+                        Calcular y Visualizar
+                    </button>
+                </form>
+                
+                <div class="examples">
+                    <h3>📝 Ejemplos de funciones válidas:</h3>
+                    <ul>
+                        <li><strong>Básicas:</strong> <code>x**2 + y**2</code>, <code>x + y</code>, <code>x * y</code></li>
+                        <li><strong>Trigonométricas:</strong> <code>sin(x) * cos(y)</code>, <code>sin(sqrt(x**2 + y**2))</code></li>
+                        <li><strong>Exponenciales:</strong> <code>exp(-x**2 - y**2)</code>, <code>exp(-(x**2 + y**2)/2)</code></li>
+                        <li><strong>Combinadas:</strong> <code>x**2 - y**2</code>, <code>sin(x) + cos(y)</code></li>
+                    </ul>
+                    <p><strong>Operadores y funciones disponibles:</strong> +, -, *, /, **, sin, cos, tan, exp, log, sqrt, abs, pi, e</p>
+                </div>
+            </div>
+            
+            <div class="error" id="error-message">
+                <p id="error-text"></p>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>Calculando y generando gráfico...</p>
+            </div>
+            
+            <div id="results">
+                <h3>📈 Resultados</h3>
+                <p><strong>Volumen bajo la superficie:</strong> <span id="volume-value"></span></p>
+                <p><strong>Error estimado:</strong> <span id="error-value"></span></p>
+            </div>
+            
+            <div id="plot-container"></div>
+        </div>
+    </div>
+    
+    <script src="/static/main.js"></script>
+</body>
+</html>

@@ -31,7 +31,36 @@ pip install -r requirements.txt
 
 ## 💻 Uso
 
-### Ejecución del programa
+### Aplicación Web (Recomendado)
+
+La forma más fácil de usar la calculadora es a través de la interfaz web:
+
+1. Ejecute la aplicación Flask:
+```bash
+# En Linux/Mac
+export FLASK_APP=app.py
+flask run
+
+# En Windows
+set FLASK_APP=app.py
+flask run
+```
+
+2. Abra su navegador web y vaya a: `http://127.0.0.1:5000`
+
+3. Ingrese la función y los parámetros en el formulario
+
+4. Haga clic en "Calcular y Visualizar" para ver el gráfico 3D interactivo y el volumen calculado
+
+La aplicación web ofrece:
+- ✨ Interfaz gráfica intuitiva y moderna
+- 📊 Gráfico 3D interactivo con Plotly (rotación, zoom, etc.)
+- ⚡ Validación en tiempo real de los parámetros
+- 🎨 Visualización con colores y contornos personalizables
+
+### Ejecución del programa de línea de comandos
+
+También puede ejecutar la versión de línea de comandos:
 
 ```bash
 python calculadora_3d.py
